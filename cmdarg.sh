@@ -58,18 +58,16 @@ function cmdarg
     elif [[ "$argtype" != "" ]]; then
 	CMDARG_FLAGS[$shortopt]=${argtypemap["$argtype"]}
 	if [[ "${option:2:4}" == "[]" ]]; then
-	    declare -p "${key}" >/dev/null 2>&1
-	    if [[ $? -ne 0 ]]; then
+	    declare -p "${key}" >/dev/null 2>&1 || {
 		echo 'Array variable '"${key}"' does not exist. Array variables MUST be declared by the user!' >&2
 		${CMDARG_ERROR_BEHAVIOR} 1
-	    fi
+	    }
 	    CMDARG_TYPES[$key]=$CMDARG_TYPE_ARRAY
 	elif [[ "${option:2:4}" == "{}" ]]; then
-	    declare -p "${key}" >/dev/null 2>&1
-	    if [[ $? -ne 0 ]]; then
+	    declare -p "${key}" >/dev/null 2>&1 || {
 		echo 'Hash variable '"${key}"' does not exist. Hash variables MUST be declared by the user!' >&2
 		${CMDARG_ERROR_BEHAVIOR} 1
-	    fi
+	    }
 	    CMDARG_TYPES[$key]=$CMDARG_TYPE_HASH
 	else
 	    CMDARG_TYPES[$key]=$CMDARG_TYPE_STRING
@@ -199,11 +197,10 @@ function cmdarg_validate
 
     local shortopt="${CMDARG_REV[$longopt]:-}"
     if [ "${CMDARG_VALIDATORS[$shortopt]:-}" != "" ]; then
-        ( ${CMDARG_VALIDATORS[$shortopt]} "$value" "$hashkey")
-	if [ $? -ne 0 ]; then
+        ${CMDARG_VALIDATORS[$shortopt]} "$value" "$hashkey" || {
 	    echo "Invalid value for -$shortopt : ${value}" >&2
 	    ${CMDARG_ERROR_BEHAVIOR} 1
-	fi
+	}
     fi
     return 0
 }
